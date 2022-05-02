@@ -13,7 +13,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 public class GetOrdersTest {
-    private StellarBurgerClient stellarBurgerClient;
+    private UserClient userClient;
+    private OrderClient orderClient;
     private User user;
     private int statusCode;
     private int orderNumber;
@@ -24,24 +25,25 @@ public class GetOrdersTest {
 
     @Before
     public void setUp() {
-        stellarBurgerClient = new StellarBurgerClient();
+        userClient = new UserClient();
+        orderClient = new OrderClient();
         user = RandomGenerator.getRandom();
-        createUserResponse = stellarBurgerClient.create(user);
+        createUserResponse = userClient.createUser(user);
         accessToken = createUserResponse.extract().path("accessToken");
         accessToken = accessToken.replace("Bearer ", "");
-        createOrder = stellarBurgerClient.createOrder(accessToken, new Order(List.of("61c0c5a71d1f82001bdaaa6d", "61c0c5a71d1f82001bdaaa6f")));
+        createOrder = orderClient.createOrder(accessToken, new Order(List.of("61c0c5a71d1f82001bdaaa6d", "61c0c5a71d1f82001bdaaa6f")));
         orderNumber = createOrder.extract().path("order.number");
     }
 
     @After
     public void tearDown() {
-        stellarBurgerClient.delete(accessToken);
+        userClient.deleteUser(accessToken);
     }
 
     @Test
     @DisplayName("Get user orders with authorization")
     public void testGetOrdersWithAuthorization() {
-        getOrdersResponse = stellarBurgerClient.getUserOrders(accessToken);
+        getOrdersResponse = orderClient.getUserOrders(accessToken);
         statusCode = getOrdersResponse.extract().statusCode();
         int actual = getOrdersResponse.extract().path("orders.number.get(0)");
         assertThat("Нельзя получить список заказов авторизованного пользователя", statusCode, equalTo(SC_OK));
@@ -51,7 +53,7 @@ public class GetOrdersTest {
     @Test
     @DisplayName("Get user orders without authorization")
     public void testGetOrdersWithoutAuthorization() {
-        getOrdersResponse = stellarBurgerClient.getUserOrders(null);
+        getOrdersResponse = orderClient.getUserOrders(null);
         statusCode = getOrdersResponse.extract().statusCode();
         String actual = getOrdersResponse.extract().path("message");
         assertThat("Можно получить список заказов неавторизованного пользователя", statusCode, equalTo(SC_UNAUTHORIZED));

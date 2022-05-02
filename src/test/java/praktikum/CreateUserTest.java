@@ -12,7 +12,7 @@ import static org.hamcrest.Matchers.*;
 
 
 public class CreateUserTest {
-    private StellarBurgerClient stellarBurgerClient;
+    private UserClient userClient;
     private User user;
     private int statusCode;
     private String email;
@@ -22,7 +22,7 @@ public class CreateUserTest {
 
     @Before
     public void setUp() {
-        stellarBurgerClient = new StellarBurgerClient();
+        userClient = new UserClient();
         user = RandomGenerator.getRandom();
         email = user.getEmail();
         password = user.getPassword();
@@ -33,14 +33,14 @@ public class CreateUserTest {
     public void tearDown() {
         if (accessToken != null) {
             accessToken = accessToken.replace("Bearer ", "");
-            stellarBurgerClient.delete(accessToken);
+            userClient.deleteUser(accessToken);
         }
     }
 
     @Test
     @DisplayName("User can be created with valid credentials")
     public void testUserCanBeCreated() {
-        ValidatableResponse createResponse = stellarBurgerClient.create(user);
+        ValidatableResponse createResponse = userClient.createUser(user);
         statusCode = createResponse.extract().statusCode();
         accessToken = createResponse.extract().path("accessToken");
         String actualRefreshToken = createResponse.extract().path("refreshToken");
@@ -56,9 +56,9 @@ public class CreateUserTest {
     @Test
     @DisplayName("The same user cannot be created")
     public void testTheSameUserCannotBeCreated() {
-        ValidatableResponse createResponse = stellarBurgerClient.create(user);
+        ValidatableResponse createResponse = userClient.createUser(user);
         accessToken = createResponse.extract().path("accessToken");
-        createResponse = stellarBurgerClient.create(user);
+        createResponse = userClient.createUser(user);
         statusCode = createResponse.extract().statusCode();
         String actual = createResponse.extract().path("message");
         assertThat("Можно создать двух одинаковых пользователей", statusCode, equalTo(SC_FORBIDDEN));
@@ -69,7 +69,7 @@ public class CreateUserTest {
     @DisplayName("User cannot be created with empty email")
     public void testUserCannotBeCreatedWithEmptyEmail() {
         user.setEmail("");
-        ValidatableResponse createResponse = stellarBurgerClient.create(user);
+        ValidatableResponse createResponse = userClient.createUser(user);
         statusCode = createResponse.extract().statusCode();
         String actual = createResponse.extract().path("message");
         assertThat("Можно создать пользователя с пустым email", statusCode, equalTo(SC_FORBIDDEN));
@@ -80,7 +80,7 @@ public class CreateUserTest {
     @DisplayName("User cannot be created with empty password")
     public void testUserCannotBeCreatedWithEmptyPassword() {
         user.setPassword("");
-        ValidatableResponse createResponse = stellarBurgerClient.create(user);
+        ValidatableResponse createResponse = userClient.createUser(user);
         statusCode = createResponse.extract().statusCode();
         String actual = createResponse.extract().path("message");
         assertThat("Можно создать пользователя с пустым паролем", statusCode, equalTo(SC_FORBIDDEN));
@@ -91,7 +91,7 @@ public class CreateUserTest {
     @DisplayName("User cannot be created with empty name")
     public void testUserCannotBeCreatedWithEmptyName() {
         user.setName("");
-        ValidatableResponse createResponse = stellarBurgerClient.create(user);
+        ValidatableResponse createResponse = userClient.createUser(user);
         statusCode = createResponse.extract().statusCode();
         String actual = createResponse.extract().path("message");
         assertThat("Можно создать пользователя с пустым именем", statusCode, equalTo(SC_FORBIDDEN));
@@ -104,7 +104,7 @@ public class CreateUserTest {
         user.setEmail("");
         user.setPassword("");
         user.setName("");
-        ValidatableResponse createResponse = stellarBurgerClient.create(user);
+        ValidatableResponse createResponse = userClient.createUser(user);
         statusCode = createResponse.extract().statusCode();
         String actual = createResponse.extract().path("message");
         assertThat("Можно создать пользователя со всеми пустыми полями", statusCode, equalTo(SC_FORBIDDEN));
@@ -115,7 +115,7 @@ public class CreateUserTest {
     @DisplayName("User cannot be created without email")
     public void testUserCannotBeCreatedWithoutEmail() {
         user.setEmail(null);
-        ValidatableResponse createResponse = stellarBurgerClient.create(user);
+        ValidatableResponse createResponse = userClient.createUser(user);
         statusCode = createResponse.extract().statusCode();
         String actual = createResponse.extract().path("message");
         assertThat("При отсутствии email в JSON - ответ сервера не 403", statusCode, equalTo(SC_FORBIDDEN));
@@ -126,7 +126,7 @@ public class CreateUserTest {
     @DisplayName("User cannot be created without password")
     public void testUserCannotBeCreatedWithoutPassword() {
         user.setPassword(null);
-        ValidatableResponse createResponse = stellarBurgerClient.create(user);
+        ValidatableResponse createResponse = userClient.createUser(user);
         statusCode = createResponse.extract().statusCode();
         String actual = createResponse.extract().path("message");
         assertThat("При отсутствии пароля в JSON - ответ севера не 403", statusCode, equalTo(SC_FORBIDDEN));
@@ -137,7 +137,7 @@ public class CreateUserTest {
     @DisplayName("User cannot be created without name")
     public void testUserCannotBeCreatedWithoutName() {
         user.setName(null);
-        ValidatableResponse createResponse = stellarBurgerClient.create(user);
+        ValidatableResponse createResponse = userClient.createUser(user);
         statusCode = createResponse.extract().statusCode();
         String actual = createResponse.extract().path("message");
         assertThat("При отсутствии name в JSON - ответ сервера не 403", statusCode, equalTo(SC_FORBIDDEN));
@@ -150,7 +150,7 @@ public class CreateUserTest {
         user.setEmail(null);
         user.setPassword(null);
         user.setName(null);
-        ValidatableResponse createResponse = stellarBurgerClient.create(user);
+        ValidatableResponse createResponse = userClient.createUser(user);
         statusCode = createResponse.extract().statusCode();
         String actual = createResponse.extract().path("message");
         assertThat("При отсутствии в JSON всех полей- ответ сервера не 403", statusCode, equalTo(SC_FORBIDDEN));

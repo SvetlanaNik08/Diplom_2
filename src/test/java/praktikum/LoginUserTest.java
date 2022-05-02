@@ -11,7 +11,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 public class LoginUserTest {
-    private StellarBurgerClient stellarBurgerClient;
+    private UserClient userClient;
     private User user;
     private UserCredentials credentials;
     ValidatableResponse createResponse;
@@ -23,12 +23,12 @@ public class LoginUserTest {
 
     @Before
     public void setUp() {
-        stellarBurgerClient = new StellarBurgerClient();
+        userClient = new UserClient();
         user = RandomGenerator.getRandom();
         email = user.getEmail();
         password = user.getPassword();
         name = user.getName();
-        createResponse= stellarBurgerClient.create(user);
+        createResponse= userClient.createUser(user);
         accessToken = createResponse.extract().path("accessToken");
         accessToken = accessToken.replace("Bearer ", "");
         credentials = new UserCredentials(email, password);
@@ -36,13 +36,13 @@ public class LoginUserTest {
 
     @After
     public void tearDown() {
-        stellarBurgerClient.delete(accessToken);
+        userClient.deleteUser(accessToken);
     }
 
     @Test
     @DisplayName("User can login with valid credentials")
     public void testUserCanLoginWithValidCredentials() {
-        ValidatableResponse loginResponse = stellarBurgerClient.login(credentials);
+        ValidatableResponse loginResponse = userClient.login(credentials);
         statusCode = loginResponse.extract().statusCode();
         String actualEmail = loginResponse.extract().path("user.email");
         String actualName = loginResponse.extract().path("user.name");
@@ -54,7 +54,7 @@ public class LoginUserTest {
     @Test
     @DisplayName("User cannot login with non-existent email")
     public void testUserCannotLoginWithNonExistentEmail() {
-        ValidatableResponse loginResponse = stellarBurgerClient.login(new UserCredentials(email.substring(0, 8) + "@yandex.ru", password));
+        ValidatableResponse loginResponse = userClient.login(new UserCredentials(email.substring(0, 8) + "@yandex.ru", password));
         statusCode = loginResponse.extract().statusCode();
         String actual = loginResponse.extract().path("message");
         assertThat("Пользователь может залогиниться с несуществующим логином", statusCode, equalTo(SC_UNAUTHORIZED));
@@ -64,7 +64,7 @@ public class LoginUserTest {
     @Test
     @DisplayName("User cannot login with non-existent password")
     public void testUserCannotLoginWithNonExistentPassword() {
-        ValidatableResponse loginResponse = stellarBurgerClient.login(new UserCredentials(email, password.substring(0, 8)));
+        ValidatableResponse loginResponse = userClient.login(new UserCredentials(email, password.substring(0, 8)));
         statusCode = loginResponse.extract().statusCode();
         String actual = loginResponse.extract().path("message");
         assertThat("Пользователь может залогиниться с несуществующим паролем", statusCode, equalTo(SC_UNAUTHORIZED));
@@ -74,7 +74,7 @@ public class LoginUserTest {
     @Test
     @DisplayName("User cannot login with non-existent credentials")
     public void testUserCannotLoginWithNonExistentCredentials() {
-        ValidatableResponse loginResponse = stellarBurgerClient.login(new UserCredentials(email.substring(0, 8) + "@yandex.ru", password.substring(0, 8)));
+        ValidatableResponse loginResponse = userClient.login(new UserCredentials(email.substring(0, 8) + "@yandex.ru", password.substring(0, 8)));
         statusCode = loginResponse.extract().statusCode();
         String actual = loginResponse.extract().path("message");
         assertThat("Пользователь может залогиниться с несуществующими email и паролем", statusCode, equalTo(SC_UNAUTHORIZED));

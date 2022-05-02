@@ -12,9 +12,9 @@ import static org.apache.http.HttpStatus.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-
 public class CreateOrderTest {
-    private StellarBurgerClient stellarBurgerClient;
+    private UserClient userClient;
+    private OrderClient orderClient;
     private User user;
     private int statusCode;
     private String accessToken;
@@ -24,22 +24,23 @@ public class CreateOrderTest {
 
     @Before
     public void setUp() {
-        stellarBurgerClient = new StellarBurgerClient();
+        userClient = new UserClient();
+        orderClient = new OrderClient();
         user = RandomGenerator.getRandom();
-        createUserResponse = stellarBurgerClient.create(user);
+        createUserResponse = userClient.createUser(user);
         accessToken = createUserResponse.extract().path("accessToken");
         accessToken = accessToken.replace("Bearer ", "");
     }
 
     @After
     public void tearDown() {
-        stellarBurgerClient.delete(accessToken);
+        userClient.deleteUser(accessToken);
     }
 
     @Test
     @DisplayName("Create order with ingredients")
     public void testCreateOrderWithIngredients() {
-        createOrderResponse = stellarBurgerClient.createOrder(accessToken, new Order(List.of("61c0c5a71d1f82001bdaaa6d", "61c0c5a71d1f82001bdaaa6f")));
+        createOrderResponse = orderClient.createOrder(accessToken, new Order(List.of("61c0c5a71d1f82001bdaaa6d", "61c0c5a71d1f82001bdaaa6f")));
         statusCode = createOrderResponse.extract().statusCode();
         int actualOrderNumber = createOrderResponse.extract().path("order.number");
         assertThat("Заказ не может быть создан", statusCode, equalTo(SC_OK));
@@ -49,7 +50,7 @@ public class CreateOrderTest {
     @Test
     @DisplayName("Create order without ingredients")
     public void testCreateOrderWithoutIngredients() {
-        createOrderResponse = stellarBurgerClient.createOrder(accessToken, new Order(List.of()));
+        createOrderResponse = orderClient.createOrder(accessToken, new Order(List.of()));
         statusCode = createOrderResponse.extract().statusCode();
         String actual = createOrderResponse.extract().path("message");
         assertThat("Заказ не может быть создан", statusCode, equalTo(SC_BAD_REQUEST));
@@ -59,7 +60,7 @@ public class CreateOrderTest {
     @Test
     @DisplayName("Create order with incorrect hash")
     public void testCreateOrderWithIncorrectHash() {
-        createOrderResponse = stellarBurgerClient.createOrder(accessToken, new Order(List.of("Э61c", "61c0c5a71d1f82001bdaaa6f")));
+        createOrderResponse = orderClient.createOrder(accessToken, new Order(List.of("Э61c", "61c0c5a71d1f82001bdaaa6f")));
         statusCode = createOrderResponse.extract().statusCode();
         assertThat("Заказ не может быть создан", statusCode, equalTo(SC_INTERNAL_SERVER_ERROR));
     }
@@ -67,7 +68,7 @@ public class CreateOrderTest {
     @Test
     @DisplayName("Create order without authorization")
     public void testCreateOrderWithoutAuthorization() {
-        createOrderResponse = stellarBurgerClient.createOrder(null, new Order(List.of("61c0c5a71d1f82001bdaaa6d", "61c0c5a71d1f82001bdaaa6f")));
+        createOrderResponse = orderClient.createOrder(null, new Order(List.of("61c0c5a71d1f82001bdaaa6d", "61c0c5a71d1f82001bdaaa6f")));
         statusCode = createOrderResponse.extract().statusCode();
         int actualOrderNumber = createOrderResponse.extract().path("order.number");
         assertThat("Заказ не может быть создан без авторизации", statusCode, equalTo(SC_OK));

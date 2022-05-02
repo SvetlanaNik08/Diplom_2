@@ -11,7 +11,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 public class ChangeUserTest {
-    private StellarBurgerClient stellarBurgerClient;
+    private UserClient userClient;
     private User user;
     ValidatableResponse createResponse;
     private int statusCode;
@@ -22,12 +22,12 @@ public class ChangeUserTest {
 
     @Before
     public void setUp() {
-        stellarBurgerClient = new StellarBurgerClient();
+        userClient = new UserClient();
         user = RandomGenerator.getRandom();
         email = user.getEmail();
         password = user.getPassword();
         name = user.getName();
-        createResponse = stellarBurgerClient.create(user);
+        createResponse = userClient.createUser(user);
         accessToken = createResponse.extract().path("accessToken");
         accessToken = accessToken.replace("Bearer ", "");
     }
@@ -36,11 +36,11 @@ public class ChangeUserTest {
     public void tearDown() {
         if (statusCode != SC_UNAUTHORIZED) {
             UserCredentials credentials = new UserCredentials(email, password);
-            ValidatableResponse loginResponse = stellarBurgerClient.login(credentials);
+            ValidatableResponse loginResponse = userClient.login(credentials);
             accessToken = loginResponse.extract().path("accessToken");
             accessToken = accessToken.replace("Bearer ", "");
         }
-        stellarBurgerClient.delete(accessToken);
+        userClient.deleteUser(accessToken);
     }
 
     @Test
@@ -48,7 +48,7 @@ public class ChangeUserTest {
     public void testAuthorizedUserCanChangeEmail() {
         email = email.substring(0, 8) + "@yandex.ru";
         user = new User(email, password, name);
-        ValidatableResponse changeResponse = stellarBurgerClient.changeUser(accessToken, user);
+        ValidatableResponse changeResponse = userClient.changeUser(accessToken, user);
         statusCode = changeResponse.extract().statusCode();
         String actualEmail = changeResponse.extract().path("user.email");
         assertThat("Пользователь не изменен", statusCode, equalTo(SC_OK));
@@ -61,7 +61,7 @@ public class ChangeUserTest {
         email = email.substring(0, 8) + "@yandex.ru";
         password = password.substring(0, 8);
         user = new User(email, password, name);
-        ValidatableResponse changeResponse = stellarBurgerClient.changeUser(accessToken, user);
+        ValidatableResponse changeResponse = userClient.changeUser(accessToken, user);
         statusCode = changeResponse.extract().statusCode();
         assertThat("Пользователь не изменен", statusCode, equalTo(SC_OK));
     }
@@ -72,7 +72,7 @@ public class ChangeUserTest {
         email = email.substring(0, 8) + "@yandex.ru";
         name = name.substring(0, 8);
         user = new User(email, password, name);
-        ValidatableResponse changeResponse = stellarBurgerClient.changeUser(accessToken, user);
+        ValidatableResponse changeResponse = userClient.changeUser(accessToken, user);
         statusCode = changeResponse.extract().statusCode();
         String actualName = changeResponse.extract().path("user.name");
         assertThat("Пользователь не изменен", statusCode, equalTo(SC_OK));
@@ -86,11 +86,10 @@ public class ChangeUserTest {
         password = password.substring(0, 8);
         name = name.substring(0, 8);
         user = new User(email, password, name);
-        ValidatableResponse changeResponse = stellarBurgerClient.changeUser(null, user);
+        ValidatableResponse changeResponse = userClient.changeUser(null, user);
         statusCode = changeResponse.extract().statusCode();
         String actual = changeResponse.extract().path("message");
         assertThat("При изменении пользователя без авторизации - ответ сервера не 401", statusCode, equalTo(SC_UNAUTHORIZED));
         assertThat("Нет сообщения 'You should be authorised'", actual, equalTo("You should be authorised"));
     }
-
 }
